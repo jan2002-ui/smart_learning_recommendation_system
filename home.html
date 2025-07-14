@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Learning Recommendation System</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+
+<body class="home-page">
+    <h1>Smart Learning Recommendation System</h1>
+
+    <nav>
+        <button onclick="showSection('home')">Home</button>
+        <button onclick="showSection('about')">About</button>
+        <button onclick="showSection('modules')">Modules</button>
+    </nav>
+
+    <!-- HOME SECTION -->
+    <div id="home" class="section active">
+        <div class="card">
+            <p><strong>Start your personalized learning journey!</strong></p>
+            <button onclick="startJourney()">Start Learning Journey</button>
+            <button onclick="resetJourney()">Reset Learning Path</button>
+            <button onclick="retrainModel()">Retrain Model</button>
+            <div id="actions" style="margin-top: 20px;"></div>
+            <div id="output"></div>
+        </div>
+
+        <div class="card">
+            <h3>Get ML-Based Recommendation</h3>
+            <form method="post" action="{% url 'predict' %}">
+                {% csrf_token %}
+
+                <label for="feature0">Age:</label>
+                <input type="number" name="features" id="feature0" class="feature-input" required><br>
+
+                <label for="feature1">Study Time (hours/week):</label>
+                <input type="number" name="features" id="feature1" class="feature-input" required><br>
+
+                <label for="feature2">Failures:</label>
+                <input type="number" name="features" id="feature2" class="feature-input" required><br>
+
+                <label for="feature3">Absences:</label>
+                <input type="number" name="features" id="feature3" class="feature-input" required><br>
+
+                <label for="feature4">GPA:</label>
+                <input type="number" step="0.01" name="features" id="feature4" class="feature-input" required><br>
+
+                <label for="feature5">Test Score:</label>
+                <input type="number" name="features" id="feature5" class="feature-input" required><br>
+
+                <label for="feature6">Gender (0 = Male, 1 = Female):</label>
+                <input type="number" name="features" id="feature6" class="feature-input" required><br>
+
+                <label for="feature7">Internet Access (0 = No, 1 = Yes):</label>
+                <input type="number" name="features" id="feature7" class="feature-input" required><br>
+
+                <label for="feature8">School Support (0 = No, 1 = Yes):</label>
+                <input type="number" name="features" id="feature8" class="feature-input" required><br>
+
+                <label for="feature9">Weekly Study Hours:</label>
+                <input type="number" name="features" id="feature9" class="feature-input" required><br>
+
+                <label for="feature10">Motivation Level (1–5):</label>
+                <input type="number" name="features" id="feature10" class="feature-input" required><br>
+
+                <label for="feature11">Past Course Score:</label>
+                <input type="number" name="features" id="feature11" class="feature-input" required><br>
+
+                <label for="feature12">Parental Support (0 = No, 1 = Yes):</label>
+                <input type="number" name="features" id="feature12" class="feature-input" required><br>
+
+                <button type="submit">Predict</button>
+                <button type="button" onclick="recommendCourse()">Recommend by Score</button>
+            </form>
+
+            {% if prediction %}
+                <p><strong>Prediction Result:</strong> {{ prediction }}</p>
+                <p class="suggestion">
+                    {% if prediction == 'Python Basics' %}
+                        You should begin with <strong>Intro to Python</strong>.
+                    {% elif prediction == 'Data Science' %}
+                        You're ready for <strong>Applied Data Science</strong>.
+                    {% elif prediction == 'Machine Learning' %}
+                        Try <strong>Hands-on Machine Learning</strong>.
+                    {% elif prediction == 'Statistics for AI' %}
+                        Brush up with <strong>Statistics for AI</strong>.
+                    {% elif prediction == 'Deep Learning Fundamentals' %}
+                        Explore <strong>Neural Networks and Deep Learning</strong>.
+                    {% else %}
+                        Contact admin for next steps.
+                    {% endif %}
+                </p>
+            {% endif %}
+
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ABOUT SECTION -->
+    <div id="about" class="section">
+        <div class="card">
+            <h2>About</h2>
+            <p>This platform uses ML and RL to provide personalized course suggestions based on student performance and learning patterns.</p>
+        </div>
+    </div>
+
+    <!-- MODULES SECTION -->
+    <div id="modules" class="section">
+        <div class="card">
+            <h2>Modules</h2>
+            <ul>
+                <li><button onclick="showVideo('Intro to Python')">Intro to Python</button></li>
+                <li><button onclick="showVideo('Applied Data Science')">Applied Data Science</button></li>
+                <li><button onclick="showVideo('Hands-on Machine Learning')">Hands-on Machine Learning</button></li>
+                <li><button onclick="showVideo('Statistics for AI')">Statistics for AI</button></li>
+                <li><button onclick="showVideo('Neural Networks and Deep Learning')">Neural Networks and Deep Learning</button></li>
+            </ul>
+            <div id="video-container" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+<script>
+    function showSection(sectionId) {
+        document.querySelectorAll('.section').forEach(sec => {
+            sec.classList.remove('active');
+        });
+        document.getElementById(sectionId).classList.add('active');
+    }
+
+    function startJourney() {
+        document.getElementById('output').innerText = '';
+        renderActions();
+    }
+
+    function resetJourney() {
+        document.getElementById("output").innerText = "Learning path has been reset.";
+        document.getElementById("actions").innerHTML = '';
+    }
+
+    function retrainModel() {
+        document.getElementById("output").innerText = "Model retrained with updated Q-values (simulated).";
+    }
+
+    function renderActions() {
+        const modules = [
+            "Intro to Python",
+            "Applied Data Science",
+            "Hands-on Machine Learning",
+            "Statistics for AI",
+            "Neural Networks and Deep Learning"
+        ];
+        const actionsDiv = document.getElementById("actions");
+        actionsDiv.innerHTML = '';
+        modules.forEach((mod, i) => {
+            const btn = document.createElement("button");
+            btn.innerText = `Select: ${mod}`;
+            btn.onclick = () => performAction(i);
+            actionsDiv.appendChild(btn);
+        });
+    }
+
+    function performAction(action) {
+        const modules = [
+            "Intro to Python",
+            "Applied Data Science",
+            "Hands-on Machine Learning",
+            "Statistics for AI",
+            "Neural Networks and Deep Learning"
+        ];
+        document.getElementById("output").innerText =
+            `You selected "${modules[action]}". Reward: ${Math.floor(Math.random() * 10)}`;
+    }
+
+    function recommendCourse() {
+        const test = parseFloat(document.getElementById('feature5').value);
+        const past = parseFloat(document.getElementById('feature11').value);
+        const avg = (test + past) / 2;
+        let rec;
+        if (avg < 60) rec = "Intro to Python";
+        else if (avg < 70) rec = "Statistics for AI";
+        else if (avg < 80) rec = "Applied Data Science";
+        else if (avg < 90) rec = "Hands-on Machine Learning";
+        else rec = "Neural Networks and Deep Learning";
+
+        document.getElementById("output").innerHTML =
+            `<div class="card suggestion" style="animation: fadeIn 0.5s ease-in-out;"><strong>Recommended Course:</strong> ${rec}</div>`;
+        showSection('modules');
+        showVideo(rec);
+    }
+    function showVideo(courseName) {
+    const videoLinks = {
+        "Intro to Python": "https://www.youtube.com/embed/rfscVS0vtbw",
+        "Applied Data Science": "https://www.youtube.com/embed/X3paOmcrTjQ",
+        "Hands-on Machine Learning": "https://www.youtube.com/embed/i_LwzRVP7bg",
+        "Statistics for AI": "https://www.youtube.com/embed/xxpc-HPKN28",
+        "Neural Networks and Deep Learning": "https://www.youtube.com/embed/aircAruvnKk"
+    };
+    const videoContainer = document.getElementById('video-container');
+    videoContainer.innerHTML = `
+        <p><strong>${courseName}</strong></p>
+        <iframe
+            style="border: none;"
+            width="100%"
+            height="315"
+            src="${videoLinks[courseName]}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+        </iframe>
+    `;
+}
+
+
+    window.addEventListener("load", function () {
+        {% if page == 'about' %}
+            showSection('about');
+        {% elif page == 'modules' %}
+            showSection('modules');
+        {% else %}
+            showSection('home');
+        {% endif %}
+    });
+</script>
+</body>
+</html>
